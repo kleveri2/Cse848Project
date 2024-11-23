@@ -588,7 +588,7 @@ int main()
 		average = average / population;
 
 		avgresults << std::fixed;
-		avgresults << average << std::endl;
+		avgresults << average << ", " << std::endl;
 
 		std::cout << i << ", " << "Best: " << GetFittest(&constellations).mFit << " Average: " << average;
 
