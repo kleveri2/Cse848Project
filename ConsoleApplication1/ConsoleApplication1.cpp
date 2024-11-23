@@ -92,7 +92,7 @@ public:
 
 		std::vector<double> time;
 
-		for (int i = 0; i <= 90; i++) 
+		for (int i = 0; i <= 90; i++)
 		{
 			time.push_back(i * 60);
 		}
@@ -104,7 +104,7 @@ public:
 		std::vector<double> y;
 		std::vector<double> z;
 
-		for (int i = 0; i <= 90; i++) 
+		for (int i = 0; i <= 90; i++)
 		{
 			x.push_back(cos(omega * (time[i] - mStartTime)));
 		}
@@ -125,28 +125,28 @@ public:
 			lon2.push_back(arctan2 - omegaE * (time[i] - mStartTime) + (toRads * mPath * 5));
 		}
 		std::vector<double> lat;
-		for (int i = 0; i <= 90; i++) 
+		for (int i = 0; i <= 90; i++)
 		{
 			lat.push_back(asin(z[i]));
 		}
 
 		std::vector<double> lon3;
 
-		for (auto &i : lon2) 
+		for (auto& i : lon2)
 		{
 			i = i * toDegs;
 			while (i > 180)
 			{
 				i = i - 360;
 			}
-			while (i < -180) 
+			while (i < -180)
 			{
 				i = i + 360;
 			}
 		}
 		mLons = lon2;
 
-		for (auto i : lat) 
+		for (auto i : lat)
 		{
 			i = i * toDegs;
 			mLats.push_back(i);
@@ -161,17 +161,17 @@ public:
 	{
 		double dx = pow(lat - mLats[time], 2);
 		double dy = pow(lon - mLons[time], 2);
-		if (sqrt(dx + dy) < mRadius) 
+		if (sqrt(dx + dy) < mRadius)
 		{
 			return 1;
 		}
-		else 
+		else
 		{
 			return 0;
 		}
 	}
 
-	void Reset() 
+	void Reset()
 	{
 		double twopi = 2 * 3.14159;
 		double toDegs = 180 / 3.14159;
@@ -246,13 +246,13 @@ public:
 };
 
 
-class Constellation 
+class Constellation
 {
 public:
 	std::vector<Sat> mSats;
 	double mFit;
 
-	Constellation(std::vector<Sat> sats) 
+	Constellation(std::vector<Sat> sats)
 	{
 		mSats = sats;
 		mFit = 0;
@@ -264,12 +264,12 @@ public:
 
 
 
-std::vector<Sat> Init(int num) 
+std::vector<Sat> Init(int num)
 {
 	std::vector<Sat> sats = {};
 	std::random_device seed;
 	std::mt19937 gen{ seed() }; // seed the generator
-	for (int i = 0; i < num; i++) 
+	for (int i = 0; i < num; i++)
 	{
 		std::uniform_int_distribution<> dist{ -3000, 3000 }; // set min and max
 		int time = dist(gen); // generate number
@@ -284,12 +284,12 @@ std::vector<Sat> Init(int num)
 	return sats;
 }
 
-void GetConstellationFitness(std::vector<Constellation> *constellations, std::unordered_set<County> *countySet) 
+void GetConstellationFitness(std::vector<Constellation>* constellations, std::unordered_set<County>* countySet)
 {
-	for (int time = 0; time <= 90; time++) 
+	for (int time = 0; time <= 90; time++)
 	{
 		//std::cout << time << std::endl;
-		for (auto &oneConstellation : *constellations) 
+		for (auto& oneConstellation : *constellations)
 		{
 			oneConstellation.mFit = 0;
 			std::unordered_set<County> hitSet;
@@ -298,46 +298,50 @@ void GetConstellationFitness(std::vector<Constellation> *constellations, std::un
 			double misstotal = 0;
 			std::unordered_set<County> miss = *countySet;
 
-			for (auto &sat : oneConstellation.mSats) 
+			for (auto& sat : oneConstellation.mSats)
 			{
-				for (auto const& county : *countySet) 
+				for (auto const& county : *countySet)
 				{
-					if (sat.mLons[time] > -45 || sat.mLats[time] < 0)
+					if (sat.mLats[time] < 0 || sat.mLons[time] > -40)
 					{
 						break;
 					}
 					if (sat.IsInRange(county.mLat, county.mLon, time) == 1)
 					{
-						if (hitSet.find(county) == hitSet.end()) 
+						if (hitSet.find(county) == hitSet.end())
 						{
 							hittotal = hittotal + county.mPop;
 							hitSet.insert(county);
 							miss.erase(county);
 						}
-						else 
+						else
 						{
 							hittotal = hittotal + (.5 * county.mPop);
 						}
 					}
 				}
-				
+
 			}
 			for (auto& missedCounty : *countySet)
 			{
+				if (missedCounty.mLat < 0 || missedCounty.mLon > -40) 
+				{
+					continue;
+				}
 				misstotal = misstotal + missedCounty.mPop;
 			}
 			oneConstellation.mFit = oneConstellation.mFit + hittotal - (misstotal);
 		}
 	}
-	
+
 }
 
 
-Constellation GetFittest(std::vector<Constellation>* constellations) 
+Constellation GetFittest(std::vector<Constellation>* constellations)
 {
 	double maxi = -10000000000000;
 	Constellation best = Constellation({});
-	for (auto& constellation : *constellations) 
+	for (auto& constellation : *constellations)
 	{
 		if (constellation.mFit > maxi)
 		{
@@ -348,7 +352,7 @@ Constellation GetFittest(std::vector<Constellation>* constellations)
 	return best;
 }
 
-std::vector<Constellation> Selection(std::vector<Constellation> *constellations, int numTournaments, int selectPop) 
+std::vector<Constellation> Selection(std::vector<Constellation>* constellations, int numTournaments, int selectPop)
 {
 	std::vector<Constellation> tournamentWinners = {};
 	std::vector<Constellation> tournamentList = *constellations;
@@ -358,10 +362,10 @@ std::vector<Constellation> Selection(std::vector<Constellation> *constellations,
 	std::mt19937 gen{ seed() }; // seed the generator
 	std::shuffle(std::begin(tournamentList), std::end(tournamentList), rng);
 
-	for (int i = 0; i < numTournaments; i++) 
+	for (int i = 0; i < numTournaments; i++)
 	{
 		std::vector<Constellation> selectList = {};
-		for (int j = 0; j < selectPop; j++) 
+		for (int j = 0; j < selectPop; j++)
 		{
 			selectList.push_back(tournamentList.back());
 			tournamentList.pop_back();
@@ -371,7 +375,7 @@ std::vector<Constellation> Selection(std::vector<Constellation> *constellations,
 	return tournamentWinners;
 }
 
-void SelectionCross(std::vector <Constellation>* toCross, std::vector<Constellation> *tournamentWinners, int crossoverRate)
+void SelectionCross(std::vector <Constellation>* toCross, std::vector<Constellation>* tournamentWinners, int crossoverRate)
 {
 	for (auto& constellation : *tournamentWinners)
 	{
@@ -385,31 +389,31 @@ void SelectionCross(std::vector <Constellation>* toCross, std::vector<Constellat
 			toCross->push_back(constellation);
 		}
 	}
-	if (toCross->size() % 2 == 1) 
+	if (toCross->size() % 2 == 1)
 	{
 		toCross->pop_back();
 	}
 }
 
-void CrossUp(std::vector<Constellation> toCross, std::vector<Constellation>* offspring) 
+void CrossUp(std::vector<Constellation> toCross, std::vector<Constellation>* offspring)
 {
 	std::random_device seed;
 	std::mt19937 gen{ seed() }; // seed the generator
 	for (int crosspointer = 0; crosspointer < toCross.size(); crosspointer = crosspointer + 2)
 	{
-		std::uniform_int_distribution<> dist{ 0, static_cast<int>(toCross[crosspointer].mSats.size()) -2}; // set min and max
+		std::uniform_int_distribution<> dist{ 0, static_cast<int>(toCross[crosspointer].mSats.size()) - 2 }; // set min and max
 		std::vector<Sat> child1 = {};
 		std::vector<Sat> child2 = {};
 		int ran = dist(gen); // generate number
 
-		for (int i = 0; i < toCross[crosspointer].mSats.size(); i++) 
+		for (int i = 0; i < toCross[crosspointer].mSats.size(); i++)
 		{
 			if (i < ran)
 			{
 				child1.push_back(toCross[crosspointer].mSats[i]);
 				child2.push_back(toCross[crosspointer + 1].mSats[i]);
 			}
-			else 
+			else
 			{
 				child2.push_back(toCross[crosspointer].mSats[i]);
 				child1.push_back(toCross[crosspointer + 1].mSats[i]);
@@ -420,13 +424,13 @@ void CrossUp(std::vector<Constellation> toCross, std::vector<Constellation>* off
 	}
 }
 
-void Mutation(std::vector<Constellation> tournamentWinners, std::vector<Constellation>* offspring, int mutationRate) 
+void Mutation(std::vector<Constellation> tournamentWinners, std::vector<Constellation>* offspring, int mutationRate)
 {
 	std::random_device seed;
 	std::mt19937 gen{ seed() }; // seed the generator
 	std::uniform_int_distribution<> dist{ 0, 100 };
 
-	for (auto i : tournamentWinners) 
+	for (auto i : tournamentWinners)
 	{
 		bool hasMutated = 0;
 		for (auto& j : i.mSats)
@@ -449,7 +453,7 @@ void Mutation(std::vector<Constellation> tournamentWinners, std::vector<Constell
 					j.Reset();
 				}
 				//Try wiggling it around
-				else 
+				else
 				{
 					hasMutated = 1;
 
@@ -465,7 +469,7 @@ void Mutation(std::vector<Constellation> tournamentWinners, std::vector<Constell
 					{
 						j.mPath = -36;
 					}
-					if (j.mPath > 36) 
+					if (j.mPath > 36)
 					{
 						j.mPath = 36;
 					}
@@ -474,26 +478,26 @@ void Mutation(std::vector<Constellation> tournamentWinners, std::vector<Constell
 			}
 		}
 
-		if (hasMutated == 1) 
+		if (hasMutated == 1)
 		{
 			hasMutated = 0;
 			offspring->push_back(i);
 		}
-		
+
 	}
 }
 
-void Replacement(std::vector<Constellation>* offsprings, std::vector<Constellation>& constellations) 
+void Replacement(std::vector<Constellation>* offsprings, std::vector<Constellation>& constellations)
 {
-	for (auto& offspring : *offsprings) 
+	for (auto& offspring : *offsprings)
 	{
 		double mini = 0;
 		int miniidx = 0;
 
-		for (int i = 0; i < constellations.size(); i++) 
+		for (int i = 0; i < constellations.size(); i++)
 		{
 			double val = constellations[i].mFit;
-			if (val < mini) 
+			if (val < mini)
 			{
 				miniidx = i;
 				mini = val;
@@ -507,6 +511,7 @@ void Replacement(std::vector<Constellation>* offsprings, std::vector<Constellati
 
 int main()
 {
+	std::cout << "START!" << std::endl;
 
 	std::unordered_set<County> countySet;
 
@@ -535,7 +540,7 @@ int main()
 	std::vector<Constellation> constellations;
 
 	int population = 100;
-	int numSats = 500;
+	int numSats = 100;
 	int generations = 200;
 
 	int mutationRate = 10;
@@ -544,15 +549,19 @@ int main()
 	int numTournaments = population / selectPop;
 
 	//Init
-	for (int i = 0; i < population; i++) 
+	for (int i = 0; i < population; i++)
 	{
 		constellations.push_back(Constellation(Init(numSats)));
+		std::cout << i << std::endl;
 	}
 
 	std::ofstream results("bestOverTime.csv");
+	std::ofstream avgresults("AverageOverTime.csv");
 
 	for (int i = 0; i < generations; i++)
 	{
+		std::cout << std::fixed;
+		std::cout << i << std::endl;
 		std::chrono::steady_clock::time_point begin;
 		GetConstellationFitness(&constellations, &countySet);
 
@@ -562,27 +571,26 @@ int main()
 		SelectionCross(&toCross, &tournamentWinners, crossoverRate);
 		std::vector<Constellation> offspring = {};
 
-		CrossUp( toCross, &offspring);
+		CrossUp(toCross, &offspring);
 
 		Mutation(tournamentWinners, &offspring, mutationRate);
 
-
+		results << std::fixed;
 		results << GetFittest(&constellations).mFit << "," << std::endl;
-		
-		const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-		std::cout <<" Time: "
-			<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
-			<< " seconds " << std::endl;
+
 
 		double average = 0;
 
-		for (auto& j : constellations) 
+		for (auto& j : constellations)
 		{
 			average = average + j.mFit;
 		}
 		average = average / population;
 
-		std::cout << i << ", " <<  "Best: " << GetFittest(&constellations).mFit << " Average: " << average;
+		avgresults << std::fixed;
+		avgresults << average << std::endl;
+
+		std::cout << i << ", " << "Best: " << GetFittest(&constellations).mFit << " Average: " << average;
 
 		Replacement(&offspring, constellations);
 
@@ -590,16 +598,15 @@ int main()
 	results.close();
 
 	std::ofstream results2;
-	results2.open("~/Downloads/BestSats.csv");
+	results2.open("BestSats2.csv");
 
 	Constellation best = GetFittest(&constellations);
 	std::cout << "Final Fitness" << best.mFit << std::endl;
 
-	for (auto& sat : best.mSats) 
+	for (auto& sat : best.mSats)
 	{
 		results2 << sat.mPath << "," << sat.mStartTime << "," << std::endl;;
 	}
 	results2.close();
 	return 0;
 }
-	
