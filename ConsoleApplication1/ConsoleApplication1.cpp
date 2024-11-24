@@ -322,7 +322,7 @@ void GetConstellationFitness(std::vector<Constellation>* constellations, std::un
 				}
 
 			}
-			for (auto& missedCounty : *countySet)
+			for (auto& missedCounty : miss)
 			{
 				if (missedCounty.mLat < 0 || missedCounty.mLon > -40) 
 				{
@@ -330,7 +330,7 @@ void GetConstellationFitness(std::vector<Constellation>* constellations, std::un
 				}
 				misstotal = misstotal + missedCounty.mPop;
 			}
-			oneConstellation.mFit = oneConstellation.mFit + hittotal - (misstotal);
+			oneConstellation.mFit = oneConstellation.mFit + hittotal - (misstotal * 100);
 		}
 	}
 
@@ -543,8 +543,8 @@ int main()
 	int numSats = 100;
 	int generations = 200;
 
-	int mutationRate = 10;
-	int crossoverRate = 80;
+	int mutationRate = 30;
+	int crossoverRate = 90;
 	int selectPop = 5;
 	int numTournaments = population / selectPop;
 
