@@ -310,12 +310,14 @@ void GetConstellationFitness(std::vector<Constellation>* constellations, std::un
 					{
 						if (hitSet.find(county) == hitSet.end())
 						{
+						
 							hittotal = hittotal + county.mPop;
 							hitSet.insert(county);
 							miss.erase(county);
 						}
 						else
 						{
+							
 							hittotal = hittotal + (.5 * county.mPop);
 						}
 					}
@@ -330,7 +332,7 @@ void GetConstellationFitness(std::vector<Constellation>* constellations, std::un
 				}
 				misstotal = misstotal + missedCounty.mPop;
 			}
-			oneConstellation.mFit = oneConstellation.mFit + hittotal - (misstotal * 100);
+			oneConstellation.mFit = oneConstellation.mFit + hittotal - (misstotal * 1);
 		}
 	}
 
@@ -543,8 +545,8 @@ int main()
 	int numSats = 100;
 	int generations = 200;
 
-	int mutationRate = 30;
-	int crossoverRate = 90;
+	int mutationRate = 10;
+	int crossoverRate = 80;
 	int selectPop = 5;
 	int numTournaments = population / selectPop;
 
