@@ -286,12 +286,17 @@ std::vector<Sat> Init(int num)
 
 void GetConstellationFitness(std::vector<Constellation>* constellations, std::unordered_set<County>* countySet)
 {
+	for (auto& j : *constellations) 
+	{
+		j.mFit = 0;
+	}
+
 	for (int time = 0; time <= 90; time++)
 	{
 		//std::cout << time << std::endl;
 		for (auto& oneConstellation : *constellations)
 		{
-			oneConstellation.mFit = 0;
+			//oneConstellation.mFit = 0;
 			std::unordered_set<County> hitSet;
 			bool ishit = 0;
 			double hittotal = 0;
