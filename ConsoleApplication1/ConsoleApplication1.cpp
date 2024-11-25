@@ -286,13 +286,9 @@ std::vector<Sat> Init(int num)
 }
 
 
-void GetConstellationFitness(std::vector<Constellation>* constellations, std::unordered_set<County>* countySet)
+void GetFitnessHelper(std::vector <Constellation*>& constellations, std::unordered_set<County>& countySet)
 {
-	for (auto& j : *constellations) 
-	{
-		j.mFit = 0;
-	}
-	for (auto& oneConstellation : *constellations)
+	for (auto& oneConstellation : constellations)
 	{
 		//std::cout << time << std::endl;
 		for (int time = 0; time <= 90; time++)
@@ -302,29 +298,29 @@ void GetConstellationFitness(std::vector<Constellation>* constellations, std::un
 			bool ishit = 0;
 			double hittotal = 0;
 			double misstotal = 0;
-			std::unordered_set<County> miss = *countySet;
+			std::unordered_set<County> miss = countySet;
 
-			for (auto& sat : oneConstellation.mSats)
+			for (auto& sat : oneConstellation->mSats)
 			{
 				if (sat.mLats[time] < 0 || sat.mLons[time] > -40)
 				{
 					break;
 				}
-				for (auto const& county : *countySet)
+				for (auto const& county : countySet)
 				{
-					
+
 					if (sat.IsInRange(county.mLat, county.mLon, time) == 1)
 					{
 						if (hitSet.find(county) == hitSet.end())
 						{
-						
+
 							hittotal = hittotal + county.mPop;
 							hitSet.insert(county);
 							miss.erase(county);
 						}
 						else
 						{
-							
+
 							hittotal = hittotal + (.5 * county.mPop);
 						}
 					}
@@ -333,15 +329,49 @@ void GetConstellationFitness(std::vector<Constellation>* constellations, std::un
 			}
 			for (auto& missedCounty : miss)
 			{
-				if (missedCounty.mLat < 0 || missedCounty.mLon > -40) 
+				if (missedCounty.mLat < 0 || missedCounty.mLon > -40)
 				{
 					continue;
 				}
 				misstotal = misstotal + missedCounty.mPop;
 			}
-			oneConstellation.mFit = oneConstellation.mFit + hittotal - (misstotal * 100);
+			oneConstellation->mFit = oneConstellation->mFit + hittotal - (misstotal * 100);
 		}
 	}
+}
+
+void GetConstellationFitness(std::vector<Constellation>* constellations, std::unordered_set<County>* countySet)
+{
+
+	std::vector<std::vector<Constellation*>> perThread = {};
+	for (int i = 0; i < 6; i++)
+	{
+		std::vector<Constellation*> b = {};
+		std::vector<Constellation*>& a = b;
+		perThread.push_back(a);
+	}
+	int i = 0;
+	for (auto& j : *constellations)
+	{
+		j.mFit = 0;
+		perThread[i % 6].push_back(&j);
+		i++;
+	}
+
+	std::vector<std::thread> threads = {};
+
+	for (int i = 0; i < 6; i++)
+	{
+		std::thread t1(GetFitnessHelper, std::ref(perThread[i]), std::ref(*countySet));
+		threads.push_back(std::move(t1));
+	}
+
+	for (auto& j : threads)
+	{
+		j.join();
+	}
+
+
 
 }
 
