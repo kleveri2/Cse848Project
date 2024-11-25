@@ -11,6 +11,7 @@
 #include <chrono>
 #include <ctime>  
 #include <string>
+#include <thread>
 
 
 
@@ -284,17 +285,17 @@ std::vector<Sat> Init(int num)
 	return sats;
 }
 
+
 void GetConstellationFitness(std::vector<Constellation>* constellations, std::unordered_set<County>* countySet)
 {
 	for (auto& j : *constellations) 
 	{
 		j.mFit = 0;
 	}
-
-	for (int time = 0; time <= 90; time++)
+	for (auto& oneConstellation : *constellations)
 	{
 		//std::cout << time << std::endl;
-		for (auto& oneConstellation : *constellations)
+		for (int time = 0; time <= 90; time++)
 		{
 			//oneConstellation.mFit = 0;
 			std::unordered_set<County> hitSet;
@@ -305,12 +306,13 @@ void GetConstellationFitness(std::vector<Constellation>* constellations, std::un
 
 			for (auto& sat : oneConstellation.mSats)
 			{
+				if (sat.mLats[time] < 0 || sat.mLons[time] > -40)
+				{
+					break;
+				}
 				for (auto const& county : *countySet)
 				{
-					if (sat.mLats[time] < 0 || sat.mLons[time] > -40)
-					{
-						break;
-					}
+					
 					if (sat.IsInRange(county.mLat, county.mLon, time) == 1)
 					{
 						if (hitSet.find(county) == hitSet.end())
@@ -337,7 +339,7 @@ void GetConstellationFitness(std::vector<Constellation>* constellations, std::un
 				}
 				misstotal = misstotal + missedCounty.mPop;
 			}
-			oneConstellation.mFit = oneConstellation.mFit + hittotal - (misstotal * 1);
+			oneConstellation.mFit = oneConstellation.mFit + hittotal - (misstotal * 100);
 		}
 	}
 
@@ -548,9 +550,9 @@ int main()
 
 	int population = 100;
 	int numSats = 100;
-	int generations = 200;
+	int generations = 300;
 
-	int mutationRate = 10;
+	int mutationRate = 50;
 	int crossoverRate = 80;
 	int selectPop = 5;
 	int numTournaments = population / selectPop;
